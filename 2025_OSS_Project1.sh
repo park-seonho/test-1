@@ -6,7 +6,7 @@ fi
 filename=$1
 echo "************OSS1 - Project1************"
 echo "StudentID : 12223546"
-echo "Name : Seonho Park"
+echo "Name : 박선호"
 echo "************************************"
 echo
 
