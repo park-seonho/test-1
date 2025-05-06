@@ -11,6 +11,7 @@ echo "************************************"
 echo
 
 search_player_stats() {
+	echo
 	echo -n "Enter a player name to search: "
 	read player_name
 	results=$(grep "$player_name" "$filename")
@@ -26,6 +27,7 @@ search_player_stats() {
 }
 
 list_top_players() {
+	echo
 	echo -n "Do you want to see the top 5 players by SLG? (y/n) : "
 	read answer
 	case $answer in
@@ -51,6 +53,7 @@ list_top_players() {
 analyze_team_stats() {
 	echo -n "Enter team abbreviation (e.g., NYY, LAD, BOS): "
 	read teamabb
+	echo
 	Age=$(tail -n +2 "$filename" | awk -F, -v tab=$teamabb '$4 == tab {total += $3; count++ } END { printf "%.1f", total/count }')
 	thr=$(tail -n +2 "$filename" | awk -F, -v tab=$teamabb '$4 == tab {total += $14 } END { print total }')
 	RBI=$(tail -n +2 "$filename" | awk -F, -v tab=$teamabb '$4 == tab {total += $15 } END { print total }')
@@ -58,29 +61,70 @@ analyze_team_stats() {
 	echo "Average age: $Age"
 	echo "Total home runs: $thr"
 	echo "Total RBI: $RBI"
+	echo
 }
 
 compare_players() {
+	echo
+	echo "Top 5 by SLG in Group C (Age > 30):"
 	echo "Compare players by age groups:"
 	echo "1. Group A (Age < 25)"
 	echo "2. Group B (Age 25-30)"
 	echo "3. Group C (Age > 30)"
 	echo -n "Select age group (1-3): "
 	read group
+	echo
+	case $group in
+		1)
+			sort=$(tail -n +2 "$filename" |awk -F, '$8 >= 502' |awk -F',' '$3 < 25' | sort -t ',' -k22 -nr | head -n 5)
+			;;
+		2)
+			sort=$(tail -n +2 "$filename" |awk -F, '$8 >= 502' |awk -F',' '($3 >= 25)&&($3 <= 30)' | sort -t ',' -k22 -nr | head -n 5)
+			;;
+		3)
+			sort=$(tail -n +2 "$filename" |awk -F, '$8 >= 502' |awk -F',' '$3 > 30' | sort -t ',' -k22 -nr | head -n 5)
+			;;
+		*)
+			echo "choose wrong group"
+			compare_players
+	esac
+	echo "$sort" | awk -F',' '{
+	printf "%s (%s) - Age: %s, SLG: %s, BA: %s, HR: %s\n", $2, $4, $3, $22, $15, $14}'
+	echo
 }
 
 search_specific_players() {
+	echo
 	echo "Find players with specific criteria"
 	echo -n "Minimum home runs: "
 	read minhr
 	echo -n "Minimum batting average (e.g., 0.280): "
 	read minbaav
+	sort=$(tail -n +2 "$filename" |awk -F, '$8 >= 502' |awk -F, -v minhr=$minhr -v minbaav=$minbaav '($14 >= minhr)&&($20 >= minbaav)' | sort -t ',' -k14,14nr)
+	echo
+	echo "Players with HR >= $minhr and BA >= $minbaav:"
+	echo "$sort" | awk -F',' '{
+        printf "%s (%s) - HR: %s, BA: %s, RBI: %s, SLG: %s\n", $2, $4, $14, $20, $15, $22}'
+	echo
+
 }
 
 generate_report() {
 	echo "Generate a formatted player report for which team?"
 	echo -n "Enter team abbreviation (e.g., NYY, LAD, BOS): "
 	read teamabb
+	count=$(tail -n +2 "$filename" | awk -F, -v teamabb=$teamabb '{if ($4 == teamabb) c++} END { print c }')
+	sort=$(tail -n +2 "$filename" | awk -F, -v teamabb=$teamabb '$4 == teamabb' | sort -t ',' -k14,14nr)
+	echo
+	echo "================== NYY PLAYER REPORT =================="
+	echo "Date: 2025/04/16"
+	echo "--------------------------------"
+	echo -e "PLAYER     \t\tHR\tRBI\tAVG\tOBP\tOPS"
+	echo "--------------------------------"
+	echo -e "$sort" | awk -F, '{
+	printf "%-20s \t%s \t%s \t%s \t%s \t%s\n", $2, $14, $15, $20, $21, $23}'
+	echo "------------------"
+	echo "TEAM TOTALS: $count players"
 }
 
 
@@ -88,14 +132,13 @@ while true; do
 	echo "[MENU]"
 	echo "1.Search player stats by name in MLB data"
 	echo "2.List top 5 players by SLG value"
-	echo "3.Analyze the team stats - average age and toatl home runs"
+	echo "3.Analyze the team stats - average age and total home runs"
 	echo "4.Compare players in different age groups"
 	echo "5.Search the players who meet specific statistical conditions"
 	echo "6.Generate a performance report (formatted data)"
 	echo "7.quit"
 	echo -n "Enter your COMMAND (1-7) : "
 	read command
-	echo
 
 	case $command in
 		1)
@@ -117,7 +160,7 @@ while true; do
 			generate_report
 			;;
 		7)
-			echo "exit the program"
+			echo "Have a good day!"
 			break
 			;;
 		*)
