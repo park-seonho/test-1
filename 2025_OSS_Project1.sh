@@ -3,17 +3,21 @@ if [ -z "$1" ]; then
 	echo "usage: ./2025_OSS_Project1.sh file"
 	exit 1
 fi
+if [ ! -e "$1" ]; then
+	echo "no file detected"
+	exit 1
+fi
 filename=$1
 echo "************OSS1 - Project1************"
-echo "StudentID : 12223546"
-echo "Name : 박선호"
+echo "*       StudentID : 12223546      *"
+echo "*       Name : Seonho Park        *"
 echo "************************************"
 echo
 
 search_player_stats() {
-	echo
 	echo -n "Enter a player name to search: "
 	read player_name
+	echo
 	results=$(grep "$player_name" "$filename")
 	SDP=$(echo "$results" | sed 's/^\([^,]*,\)\{3\}\([^,]*\).*/\2/')
 	Age=$(echo "$results" | sed 's/^\([^,]*,\)\{2\}\([^,]*\).*/\2/')
@@ -27,7 +31,6 @@ search_player_stats() {
 }
 
 list_top_players() {
-	echo
 	echo -n "Do you want to see the top 5 players by SLG? (y/n) : "
 	read answer
 	case $answer in
@@ -77,19 +80,23 @@ compare_players() {
 	case $group in
 		1)
 			sort=$(tail -n +2 "$filename" |awk -F, '$8 >= 502' |awk -F',' '$3 < 25' | sort -t ',' -k22 -nr | head -n 5)
+			gr2="A (Age < 25)"
 			;;
 		2)
 			sort=$(tail -n +2 "$filename" |awk -F, '$8 >= 502' |awk -F',' '($3 >= 25)&&($3 <= 30)' | sort -t ',' -k22 -nr | head -n 5)
+			gr2="B (Age 25-30)"
 			;;
 		3)
 			sort=$(tail -n +2 "$filename" |awk -F, '$8 >= 502' |awk -F',' '$3 > 30' | sort -t ',' -k22 -nr | head -n 5)
+			gr2="C (Age > 30)"
 			;;
 		*)
 			echo "choose wrong group"
 			compare_players
 	esac
+	echo "Top 5 by SLG in Group $gr2:"
 	echo "$sort" | awk -F',' '{
-	printf "%s (%s) - Age: %s, SLG: %s, BA: %s, HR: %s\n", $2, $4, $3, $22, $15, $14}'
+	printf "%s (%s) - Age: %s, SLG: %s, BA: %s, HR: %s\n", $2, $4, $3, $22, $20, $14}'
 	echo
 }
 
@@ -102,7 +109,7 @@ search_specific_players() {
 	read minbaav
 	sort=$(tail -n +2 "$filename" |awk -F, '$8 >= 502' |awk -F, -v minhr=$minhr -v minbaav=$minbaav '($14 >= minhr)&&($20 >= minbaav)' | sort -t ',' -k14,14nr)
 	echo
-	echo "Players with HR >= $minhr and BA >= $minbaav:"
+	echo "Players with HR ≥ $minhr and BA ≥ $minbaav:"
 	echo "$sort" | awk -F',' '{
         printf "%s (%s) - HR: %s, BA: %s, RBI: %s, SLG: %s\n", $2, $4, $14, $20, $15, $22}'
 	echo
@@ -116,8 +123,9 @@ generate_report() {
 	count=$(tail -n +2 "$filename" | awk -F, -v teamabb=$teamabb '{if ($4 == teamabb) c++} END { print c }')
 	sort=$(tail -n +2 "$filename" | awk -F, -v teamabb=$teamabb '$4 == teamabb' | sort -t ',' -k14,14nr)
 	echo
-	echo "================== NYY PLAYER REPORT =================="
-	echo "Date: 2025/04/16"
+	echo "================== $teamabb PLAYER REPORT =================="
+	echo -n "Date: "
+	date +"%Y/%m/%d"
 	echo "--------------------------------"
 	echo -e "PLAYER     \t\tHR\tRBI\tAVG\tOBP\tOPS"
 	echo "--------------------------------"
