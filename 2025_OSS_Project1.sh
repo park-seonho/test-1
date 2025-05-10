@@ -4,7 +4,11 @@ if [ -z "$1" ]; then
 	exit 1
 fi
 if [ ! -e "$1" ]; then
-	echo "no file detected"
+	echo "$1 file don't exist"
+	exit 1
+fi
+if [ "$1" != *.csv ]; then
+	echo "Please input csv file"
 	exit 1
 fi
 filename=$1
